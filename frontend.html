@@ -1,0 +1,615 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f5f7f4">
+    <title>Minhas tarefas — Organize seus estudos</title>
+    <style>
+      :root {
+        color-scheme: light;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        color: #23332d;
+        background: #f5f7f4;
+        font-synthesis: none;
+        text-rendering: optimizeLegibility;
+        --ink: #23332d;
+        --muted: #687870;
+        --line: #e2e9e3;
+        --paper: #fff;
+        --green: #277451;
+        --green-dark: #1d5d40;
+        --green-soft: #eaf4ed;
+        --red: #a63e3e;
+        --red-soft: #fbefed;
+        --shadow: 0 12px 32px rgb(34 55 42 / 5%);
+      }
+
+      * { box-sizing: border-box; }
+      [hidden] { display: none !important; }
+
+      body {
+        min-width: 320px;
+        min-height: 100vh;
+        margin: 0;
+        background:
+          radial-gradient(ellipse at 50% -20%, rgb(223 237 225 / 72%), transparent 48rem),
+          #f5f7f4;
+      }
+
+      button, input, textarea { font: inherit; }
+      button { -webkit-tap-highlight-color: transparent; }
+      button:focus-visible, input:focus-visible, textarea:focus-visible {
+        outline: 3px solid #77b990;
+        outline-offset: 3px;
+      }
+
+      .page-shell { width: min(100% - 40px, 1060px); margin: 0 auto; padding: 38px 0 64px; }
+      .site-header { display: flex; align-items: center; gap: 14px; margin-bottom: 35px; }
+      .brand-mark {
+        display: grid;
+        width: 48px;
+        height: 48px;
+        flex: 0 0 auto;
+        place-items: center;
+        color: #fff;
+        background: var(--green);
+        border-radius: 15px;
+        box-shadow: 0 7px 16px rgb(39 116 81 / 18%);
+      }
+      .brand-mark svg { width: 25px; height: 25px; }
+      .brand-name { margin: 0; color: var(--ink); font-size: 1.18rem; font-weight: 720; letter-spacing: -.025em; }
+      .brand-subtitle { margin: 3px 0 0; color: var(--muted); font-size: .92rem; }
+
+      .intro { margin: 0 0 23px; }
+      .eyebrow { margin: 0 0 7px; color: var(--green); font-size: .76rem; font-weight: 750; letter-spacing: .11em; text-transform: uppercase; }
+      .intro h2 { margin: 0; font-size: clamp(1.55rem, 3vw, 2rem); letter-spacing: -.045em; line-height: 1.2; }
+      .intro p:last-child { margin: 8px 0 0; color: var(--muted); font-size: .94rem; }
+
+      .workspace { display: grid; grid-template-columns: minmax(270px, .82fr) minmax(0, 1.48fr); align-items: start; gap: 22px; }
+      .panel { min-width: 0; padding: 24px; background: var(--paper); border: 1px solid var(--line); border-radius: 18px; box-shadow: var(--shadow); }
+      .panel-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 20px; }
+      .panel-heading h3 { margin: 0; font-size: 1.04rem; letter-spacing: -.02em; }
+      .task-total { color: var(--muted); font-size: .81rem; white-space: nowrap; }
+
+      .field { margin-bottom: 17px; }
+      .field label { display: block; margin-bottom: 7px; color: #34443d; font-size: .84rem; font-weight: 650; }
+      .optional { color: #829087; font-size: .77rem; font-weight: 450; }
+      .field input, .field textarea {
+        display: block;
+        width: 100%;
+        padding: 11px 12px;
+        color: var(--ink);
+        background: #fff;
+        border: 1px solid #dce5dd;
+        border-radius: 10px;
+        transition: border-color .16s ease, box-shadow .16s ease;
+      }
+      .field input::placeholder, .field textarea::placeholder { color: #9aa69e; }
+      .field input:focus, .field textarea:focus { border-color: #69a982; box-shadow: 0 0 0 3px rgb(105 169 130 / 13%); outline: none; }
+      .field textarea { min-height: 106px; resize: vertical; }
+      .field [aria-invalid="true"] { border-color: #bf5551; }
+      .field-error { margin: 6px 0 0; color: var(--red); font-size: .81rem; }
+
+      .button {
+        display: inline-flex;
+        min-height: 42px;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 9px 14px;
+        color: var(--ink);
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        cursor: pointer;
+        font-size: .86rem;
+        font-weight: 650;
+        line-height: 1.2;
+        transition: background-color .16s ease, border-color .16s ease, color .16s ease, transform .16s ease;
+      }
+      .button:hover { background: #f7faf7; border-color: #cbd9ce; }
+      .button:active { transform: translateY(1px); }
+      .button svg { width: 17px; height: 17px; flex: 0 0 auto; }
+      .button-primary { width: 100%; color: #fff; background: var(--green); border-color: var(--green); }
+      .button-primary:hover { color: #fff; background: var(--green-dark); border-color: var(--green-dark); }
+      .button-quiet { min-height: 36px; padding: 7px 10px; color: #506159; border-color: transparent; }
+      .button-quiet:hover { color: var(--ink); background: #f3f6f3; border-color: transparent; }
+      .button-danger { color: var(--red); }
+      .button-danger:hover { color: #8e2d2d; background: var(--red-soft); border-color: #f3d9d5; }
+      .form-actions { display: grid; gap: 8px; }
+
+      .feedback { min-height: 0; margin: 0 0 17px; }
+      .feedback:empty { display: none; }
+      .feedback-message { display: flex; align-items: flex-start; gap: 9px; padding: 11px 12px; border-radius: 10px; font-size: .85rem; line-height: 1.4; }
+      .feedback-message svg { width: 17px; height: 17px; flex: 0 0 auto; }
+      .feedback-success { color: #24633f; background: #edf7ef; }
+      .feedback-error { color: #963b36; background: #fff0ee; }
+
+      .task-panel { padding: 24px; }
+      .task-panel .panel-heading { margin-bottom: 15px; }
+      .filters { display: flex; flex-wrap: wrap; gap: 7px; padding: 4px; background: #f4f7f4; border-radius: 12px; }
+      .filter-button {
+        display: inline-flex;
+        min-height: 36px;
+        flex: 1 1 auto;
+        align-items: center;
+        justify-content: center;
+        gap: 7px;
+        padding: 7px 10px;
+        color: #66756d;
+        background: transparent;
+        border: 0;
+        border-radius: 9px;
+        cursor: pointer;
+        font-size: .82rem;
+        font-weight: 620;
+      }
+      .filter-button:hover { color: var(--ink); background: rgb(255 255 255 / 70%); }
+      .filter-button[aria-pressed="true"] { color: var(--green-dark); background: #fff; box-shadow: 0 1px 4px rgb(36 57 43 / 9%); }
+      .filter-count { color: #859189; font-size: .75rem; font-weight: 550; }
+      .filter-button[aria-pressed="true"] .filter-count { color: var(--green); }
+      .task-list { display: grid; gap: 11px; margin: 17px 0 0; padding: 0; list-style: none; }
+
+      .task-item { min-width: 0; padding: 16px; border: 1px solid var(--line); border-radius: 13px; transition: border-color .16s ease, background-color .16s ease; }
+      .task-item:hover { border-color: #cfdbd0; }
+      .task-item.is-completed { background: #fbfcfb; }
+      .task-topline { display: flex; align-items: flex-start; gap: 11px; }
+      .status-toggle {
+        display: grid;
+        width: 24px;
+        height: 24px;
+        flex: 0 0 auto;
+        place-items: center;
+        margin: 0;
+        padding: 0;
+        color: #718078;
+        background: #fff;
+        border: 1.5px solid #bdcbc0;
+        border-radius: 8px;
+        cursor: pointer;
+      }
+      .status-toggle:hover { color: var(--green); border-color: var(--green); }
+      .status-toggle[aria-pressed="true"] { color: #fff; background: var(--green); border-color: var(--green); }
+      .status-toggle svg { width: 15px; height: 15px; }
+      .task-copy { min-width: 0; flex: 1; }
+      .task-title { overflow-wrap: anywhere; margin: 1px 0 0; color: var(--ink); font-size: .94rem; font-weight: 680; line-height: 1.4; }
+      .is-completed .task-title { color: #758179; text-decoration: line-through; text-decoration-thickness: 1px; }
+      .task-description { overflow-wrap: anywhere; margin: 6px 0 0; color: var(--muted); font-size: .84rem; line-height: 1.55; }
+      .task-meta { display: flex; align-items: center; gap: 7px; margin-top: 10px; }
+      .status-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 8px; color: #59685f; background: #f0f3f0; border-radius: 999px; font-size: .72rem; font-weight: 650; }
+      .status-badge::before { width: 6px; height: 6px; content: ""; background: #829088; border-radius: 50%; }
+      .is-completed .status-badge { color: #286343; background: #eaf4ed; }
+      .is-completed .status-badge::before { background: #43835b; }
+      .task-actions { display: flex; flex-wrap: wrap; gap: 3px; margin: 12px 0 0 35px; }
+      .task-actions .button { min-height: 34px; padding: 6px 9px; font-size: .79rem; }
+
+      .empty-state, .loading-state, .error-state { display: grid; min-height: 220px; place-content: center; justify-items: center; padding: 27px 16px; text-align: center; }
+      .state-icon { display: grid; width: 48px; height: 48px; place-items: center; margin-bottom: 13px; color: var(--green); background: var(--green-soft); border-radius: 15px; }
+      .state-icon svg { width: 24px; height: 24px; }
+      .error-state .state-icon { color: var(--red); background: var(--red-soft); }
+      .empty-state h4, .error-state h4 { margin: 0; font-size: .97rem; }
+      .empty-state p, .error-state p { max-width: 280px; margin: 7px 0 0; color: var(--muted); font-size: .84rem; line-height: 1.5; }
+      .empty-state .button, .error-state .button { margin-top: 16px; }
+      .loading-state { gap: 12px; color: var(--muted); font-size: .87rem; }
+      .spinner { width: 26px; height: 26px; border: 3px solid #dce8df; border-top-color: var(--green); border-radius: 50%; animation: spin .75s linear infinite; }
+      @keyframes spin { to { transform: rotate(360deg); } }
+      @media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+      }
+
+      dialog {
+        width: min(440px, calc(100% - 32px));
+        padding: 24px;
+        color: var(--ink);
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        box-shadow: 0 24px 70px rgb(20 37 26 / 20%);
+      }
+      dialog::backdrop { background: rgb(20 34 25 / 38%); backdrop-filter: blur(2px); }
+      dialog h2 { margin: 0; font-size: 1.15rem; letter-spacing: -.025em; }
+      dialog p { margin: 9px 0 21px; color: var(--muted); font-size: .9rem; line-height: 1.55; }
+      .dialog-actions { display: flex; justify-content: flex-end; gap: 9px; }
+      .dialog-actions .button { min-width: 105px; }
+
+      @media (max-width: 720px) {
+        .page-shell { width: min(100% - 30px, 560px); padding-top: 25px; }
+        .site-header { margin-bottom: 29px; }
+        .workspace { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+        .panel, .task-panel { padding: 20px; }
+        .field textarea { min-height: 92px; }
+      }
+      @media (max-width: 390px) {
+        .page-shell { width: calc(100% - 22px); }
+        .panel, .task-panel { padding: 16px; border-radius: 15px; }
+        .task-item { padding: 13px; }
+        .filters { gap: 3px; padding: 3px; }
+        .filter-button { gap: 4px; padding-right: 6px; padding-left: 6px; font-size: .78rem; }
+        .task-actions { margin-left: 0; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="site-header">
+        <div class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M8 5.5h11M8 12h11M8 18.5h11"></path>
+            <path d="m3.5 5.5 1.3 1.3 2-2.2M3.5 12l1.3 1.3 2-2.2"></path>
+            <circle cx="4.8" cy="18.5" r="1"></circle>
+          </svg>
+        </div>
+        <div>
+          <h1 class="brand-name">Minhas Tarefas</h1>
+          <p class="brand-subtitle">Organize seus estudos e acompanhe seu progresso.</p>
+        </div>
+      </header>
+
+      <main>
+        <section class="intro" aria-labelledby="page-title">
+          <p class="eyebrow">Seu espaço de estudos</p>
+          <h2 id="page-title">Um passo de cada vez.</h2>
+          <p>Adicione suas tarefas e acompanhe o que já concluiu.</p>
+        </section>
+
+        <div id="feedback" class="feedback" role="status" aria-live="polite" aria-atomic="true"></div>
+
+        <section id="loading-state" class="panel loading-state" aria-label="Carregando tarefas" aria-live="polite">
+          <span class="spinner" aria-hidden="true"></span>
+          <span>Preparando sua lista...</span>
+        </section>
+
+        <section id="error-state" class="panel error-state" aria-labelledby="error-title" hidden>
+          <div class="state-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="9"></circle><path d="M12 7.5v5M12 16.2h.01"></path>
+            </svg>
+          </div>
+          <h4 id="error-title">Não foi possível carregar sua lista</h4>
+          <p>Ocorreu um erro ao preparar as tarefas. Tente novamente.</p>
+          <button id="retry-button" class="button" type="button">Tentar novamente</button>
+        </section>
+
+        <div id="workspace" class="workspace" hidden>
+          <section class="panel" aria-labelledby="form-heading">
+            <div class="panel-heading">
+              <h3 id="form-heading">Nova tarefa</h3>
+            </div>
+            <form id="task-form" novalidate>
+              <div class="field">
+                <label for="task-title">Título <span aria-hidden="true">*</span></label>
+                <input id="task-title" name="title" type="text" maxlength="120" placeholder="Ex.: Estudar HTML e CSS" aria-describedby="title-error" required>
+                <p id="title-error" class="field-error" hidden>Informe um título para a tarefa.</p>
+              </div>
+              <div class="field">
+                <label for="task-description">Descrição <span class="optional">(opcional)</span></label>
+                <textarea id="task-description" name="description" maxlength="500" placeholder="Adicione alguns detalhes..."></textarea>
+              </div>
+              <div class="form-actions">
+                <button id="submit-button" class="button button-primary" type="submit">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                    <path d="M12 5v14M5 12h14"></path>
+                  </svg>
+                  <span>Adicionar tarefa</span>
+                </button>
+                <button id="cancel-edit-button" class="button button-quiet" type="button" hidden>Cancelar edição</button>
+              </div>
+            </form>
+          </section>
+
+          <section class="panel task-panel" aria-labelledby="list-heading">
+            <div class="panel-heading">
+              <h3 id="list-heading">Sua lista</h3>
+              <span id="task-total" class="task-total"></span>
+            </div>
+            <div class="filters" role="group" aria-label="Filtrar tarefas por situação">
+              <button class="filter-button" type="button" data-filter="all" aria-pressed="true">Todas <span class="filter-count" id="count-all">0</span></button>
+              <button class="filter-button" type="button" data-filter="pending" aria-pressed="false">Pendentes <span class="filter-count" id="count-pending">0</span></button>
+              <button class="filter-button" type="button" data-filter="completed" aria-pressed="false">Concluídas <span class="filter-count" id="count-completed">0</span></button>
+            </div>
+            <ul id="task-list" class="task-list" aria-label="Tarefas"></ul>
+            <div id="empty-state" class="empty-state" hidden>
+              <div class="state-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M8 5.5h11M8 12h11M8 18.5h11"></path><path d="m3.5 5.5 1.3 1.3 2-2.2"></path>
+                </svg>
+              </div>
+              <h4 id="empty-title">Sua lista está vazia</h4>
+              <p id="empty-description">Adicione sua primeira tarefa para começar a organizar seus estudos.</p>
+            </div>
+          </section>
+        </div>
+      </main>
+    </div>
+
+    <dialog id="delete-dialog" aria-labelledby="dialog-title" aria-describedby="dialog-description">
+      <form method="dialog">
+        <h2 id="dialog-title">Excluir esta tarefa?</h2>
+        <p id="dialog-description">Esta ação não pode ser desfeita.</p>
+        <div class="dialog-actions">
+          <button id="cancel-delete-button" class="button" type="submit" value="cancel" autofocus>Cancelar</button>
+          <button id="confirm-delete-button" class="button button-danger" type="button">Excluir tarefa</button>
+        </div>
+      </form>
+    </dialog>
+
+    <script>
+      const demoTasks = [
+        { id: 1, title: "Estudar HTML e CSS", description: "Revisar estrutura e estilização de páginas.", status: "pending" },
+        { id: 2, title: "Revisar JavaScript", description: "Estudar variáveis, funções e estruturas condicionais.", status: "completed" },
+        { id: 3, title: "Resolver exercícios", description: "Praticar exercícios de programação.", status: "pending" },
+      ];
+
+      const tasks = demoTasks.map((task) => ({ ...task }));
+      const state = { filter: "all", editingId: null, deletingId: null };
+      let simulateLoadError = new URLSearchParams(window.location.search).get("estado") === "erro";
+      const elements = {
+        loading: document.querySelector("#loading-state"),
+        error: document.querySelector("#error-state"),
+        workspace: document.querySelector("#workspace"),
+        feedback: document.querySelector("#feedback"),
+        form: document.querySelector("#task-form"),
+        formHeading: document.querySelector("#form-heading"),
+        title: document.querySelector("#task-title"),
+        description: document.querySelector("#task-description"),
+        titleError: document.querySelector("#title-error"),
+        submitButton: document.querySelector("#submit-button"),
+        submitLabel: document.querySelector("#submit-button span"),
+        cancelEdit: document.querySelector("#cancel-edit-button"),
+        list: document.querySelector("#task-list"),
+        empty: document.querySelector("#empty-state"),
+        emptyTitle: document.querySelector("#empty-title"),
+        emptyDescription: document.querySelector("#empty-description"),
+        total: document.querySelector("#task-total"),
+        dialog: document.querySelector("#delete-dialog"),
+        cancelDelete: document.querySelector("#cancel-delete-button"),
+      };
+
+      let feedbackTimer;
+
+      function makeSvg(markup) {
+        const wrapper = document.createElement("span");
+        wrapper.innerHTML = markup;
+        return wrapper.firstElementChild;
+      }
+
+      function setFeedback(message, type = "success") {
+        window.clearTimeout(feedbackTimer);
+        elements.feedback.replaceChildren();
+        if (!message) return;
+
+        const container = document.createElement("div");
+        container.className = `feedback-message feedback-${type}`;
+        const icon = type === "error"
+          ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 7.5v5M12 16.2h.01"></path></svg>'
+          : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.2 4.2L19 7"></path></svg>';
+        container.append(makeSvg(icon), document.createTextNode(message));
+        elements.feedback.append(container);
+        feedbackTimer = window.setTimeout(() => elements.feedback.replaceChildren(), 4500);
+      }
+
+      function updateFormMode() {
+        const editing = state.editingId !== null;
+        elements.formHeading.textContent = editing ? "Editar tarefa" : "Nova tarefa";
+        elements.submitLabel.textContent = editing ? "Salvar alterações" : "Adicionar tarefa";
+        elements.submitButton.querySelector("svg").innerHTML = editing
+          ? '<path d="M5 12.5 9.2 17 19 7"></path>'
+          : '<path d="M12 5v14M5 12h14"></path>';
+        elements.cancelEdit.hidden = !editing;
+      }
+
+      function renderTask(task) {
+        const item = document.createElement("li");
+        item.className = `task-item${task.status === "completed" ? " is-completed" : ""}`;
+
+        const top = document.createElement("div");
+        top.className = "task-topline";
+        const toggle = document.createElement("button");
+        toggle.className = "status-toggle";
+        toggle.type = "button";
+        toggle.setAttribute("aria-pressed", String(task.status === "completed"));
+        toggle.setAttribute("aria-label", `${task.status === "completed" ? "Marcar como pendente" : "Marcar como concluída"}: ${task.title}`);
+        if (task.status === "completed") {
+          toggle.append(makeSvg('<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.2 4.2L19 7"></path></svg>'));
+        }
+
+        const copy = document.createElement("div");
+        copy.className = "task-copy";
+        const title = document.createElement("h4");
+        title.className = "task-title";
+        title.textContent = task.title;
+        copy.append(title);
+        if (task.description) {
+          const description = document.createElement("p");
+          description.className = "task-description";
+          description.textContent = task.description;
+          copy.append(description);
+        }
+        const meta = document.createElement("div");
+        meta.className = "task-meta";
+        const status = document.createElement("span");
+        status.className = "status-badge";
+        status.textContent = task.status === "completed" ? "Concluída" : "Pendente";
+        meta.append(status);
+        copy.append(meta);
+        top.append(toggle, copy);
+
+        const actions = document.createElement("div");
+        actions.className = "task-actions";
+        const edit = document.createElement("button");
+        edit.className = "button button-quiet";
+        edit.type = "button";
+        edit.setAttribute("aria-label", `Editar tarefa: ${task.title}`);
+        edit.append(makeSvg('<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m14 5 5 5M4 20l4.3-.9L19 8.4 15.6 5 4.9 15.7 4 20Z"></path></svg>'), document.createTextNode("Editar"));
+        const remove = document.createElement("button");
+        remove.className = "button button-quiet button-danger";
+        remove.type = "button";
+        remove.setAttribute("aria-label", `Excluir tarefa: ${task.title}`);
+        remove.append(makeSvg('<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M5.5 7l1 13h11l1-13M9 7V4h6v3"></path></svg>'), document.createTextNode("Excluir"));
+
+        toggle.addEventListener("click", () => toggleStatus(task.id));
+        edit.addEventListener("click", () => beginEdit(task.id));
+        remove.addEventListener("click", () => confirmDelete(task.id));
+        actions.append(edit, remove);
+        item.append(top, actions);
+        return item;
+      }
+
+      function renderTasks() {
+        const pending = tasks.filter((task) => task.status === "pending").length;
+        const completed = tasks.length - pending;
+        document.querySelector("#count-all").textContent = String(tasks.length);
+        document.querySelector("#count-pending").textContent = String(pending);
+        document.querySelector("#count-completed").textContent = String(completed);
+        elements.total.textContent = `${tasks.length} ${tasks.length === 1 ? "tarefa" : "tarefas"}`;
+
+        document.querySelectorAll(".filter-button").forEach((button) => {
+          button.setAttribute("aria-pressed", String(button.dataset.filter === state.filter));
+        });
+
+        const visibleTasks = tasks.filter((task) => state.filter === "all" || task.status === state.filter);
+        elements.list.replaceChildren(...visibleTasks.map(renderTask));
+        elements.list.hidden = visibleTasks.length === 0;
+        elements.empty.hidden = visibleTasks.length > 0;
+        if (tasks.length === 0) {
+          elements.emptyTitle.textContent = "Sua lista está vazia";
+          elements.emptyDescription.textContent = "Adicione sua primeira tarefa para começar a organizar seus estudos.";
+        } else if (visibleTasks.length === 0) {
+          elements.emptyTitle.textContent = state.filter === "pending" ? "Nenhuma tarefa pendente" : "Nenhuma tarefa concluída";
+          elements.emptyDescription.textContent = "Quando houver tarefas nesta situação, elas aparecerão aqui.";
+        }
+      }
+
+      function clearTitleError() {
+        elements.title.removeAttribute("aria-invalid");
+        elements.titleError.hidden = true;
+      }
+
+      function resetForm() {
+        elements.form.reset();
+        state.editingId = null;
+        clearTitleError();
+        updateFormMode();
+      }
+
+      function beginEdit(id) {
+        const task = tasks.find((item) => item.id === id);
+        if (!task) return;
+        state.editingId = id;
+        elements.title.value = task.title;
+        elements.description.value = task.description;
+        clearTitleError();
+        updateFormMode();
+        elements.title.focus();
+        elements.form.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      }
+
+      function toggleStatus(id) {
+        const task = tasks.find((item) => item.id === id);
+        if (!task) return;
+        task.status = task.status === "completed" ? "pending" : "completed";
+        renderTasks();
+        setFeedback(task.status === "completed" ? "Tarefa marcada como concluída." : "Tarefa marcada como pendente.");
+      }
+
+      function confirmDelete(id) {
+        state.deletingId = id;
+        elements.dialog.showModal();
+      }
+
+      function deleteTask() {
+        if (state.deletingId === null) return;
+        const deleted = tasks.find((task) => task.id === state.deletingId);
+        const deletedId = state.deletingId;
+        const wasEditing = state.editingId === deletedId;
+        const index = tasks.findIndex((task) => task.id === deletedId);
+        if (index >= 0) tasks.splice(index, 1);
+        state.deletingId = null;
+        elements.dialog.close();
+        if (wasEditing) resetForm();
+        renderTasks();
+        setFeedback(deleted ? `Tarefa "${deleted.title}" excluída.` : "Tarefa excluída.");
+      }
+
+      elements.form.addEventListener("submit", (event) => {
+        event.preventDefault();
+        const title = elements.title.value.trim();
+        if (!title) {
+          elements.title.setAttribute("aria-invalid", "true");
+          elements.titleError.hidden = false;
+          elements.title.focus();
+          setFeedback("Confira os campos destacados antes de continuar.", "error");
+          return;
+        }
+
+        clearTitleError();
+        const description = elements.description.value.trim();
+        if (state.editingId !== null) {
+          const task = tasks.find((item) => item.id === state.editingId);
+          if (!task) return;
+          task.title = title;
+          task.description = description;
+          resetForm();
+          renderTasks();
+          setFeedback("Alterações salvas com sucesso.");
+          return;
+        }
+
+        tasks.unshift({ id: Date.now(), title, description, status: "pending" });
+        resetForm();
+        renderTasks();
+        setFeedback("Tarefa adicionada com sucesso.");
+        elements.title.focus();
+      });
+
+      elements.title.addEventListener("input", () => {
+        if (elements.title.value.trim()) clearTitleError();
+      });
+
+      elements.cancelEdit.addEventListener("click", () => {
+        resetForm();
+        setFeedback("Edição cancelada.");
+      });
+
+      document.querySelectorAll(".filter-button").forEach((button) => {
+        button.addEventListener("click", () => {
+          state.filter = button.dataset.filter;
+          renderTasks();
+        });
+      });
+
+      document.querySelector("#confirm-delete-button").addEventListener("click", deleteTask);
+      elements.dialog.addEventListener("close", () => {
+        state.deletingId = null;
+      });
+
+      function showInitialTasks() {
+        elements.loading.hidden = true;
+        elements.error.hidden = true;
+        elements.workspace.hidden = false;
+        renderTasks();
+      }
+
+      function simulateInitialLoad() {
+        elements.workspace.hidden = true;
+        elements.error.hidden = true;
+        elements.loading.hidden = false;
+        window.setTimeout(() => {
+          elements.loading.hidden = true;
+          if (simulateLoadError) {
+            simulateLoadError = false;
+            elements.error.hidden = false;
+            return;
+          }
+          elements.workspace.hidden = false;
+          renderTasks();
+        }, 450);
+      }
+
+      document.querySelector("#retry-button").addEventListener("click", simulateInitialLoad);
+      updateFormMode();
+      simulateInitialLoad();
+    </script>
+  </body>
+</html>
